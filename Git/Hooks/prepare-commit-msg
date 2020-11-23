@@ -1,0 +1,26 @@
+#!/bin/sh
+commitMsgFile=$1
+commitMode=$2
+branch=$(git symbolic-ref --short HEAD)
+IFS='/' read -ra BranchTags<<<"$branch"
+if [ -z "${BranchTags[1]}" ]; then
+IFS='_' read -ra BranchNameTags<<<${BranchTags[0]}
+else
+IFS='_' read -ra BranchNameTags<<<${BranchTags[1]}
+fi
+existingMsg=`cat $commitMsgFile`
+IFS=';' read -ra MsgTags<<<"$existingMsg"
+if [ "$commitMode" == "message" ]; then
+	if [[ $existingMsg == *";"* ]]; then
+		echo -n "JIRA-"${MsgTags[0]}": ">$commitMsgFile
+		echo ${MsgTags[1]}>>$commitMsgFile
+	else
+		echo -n ${BranchNameTags[0]}": ">$commitMsgFile
+		echo $existingMsg>>$commitMsgFile
+	fi
+else
+  firstline=`head -n1 $commitMsgFile`
+  if [-z "$firstline"]; then
+    echo "[$branch] ">>$commitMsgFile
+  fi
+fi
